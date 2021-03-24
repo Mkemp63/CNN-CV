@@ -250,6 +250,9 @@ def main():
         print(config.BASELINE_DIR)
         plot_val_train_loss(history_baseline)
 
+    #
+    # NOG AAN TE PASSEN
+    #
     # other model
     try:
         model_dropout = tf.keras.models.load_model('./models/model_dropout/')
