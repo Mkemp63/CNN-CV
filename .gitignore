@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 .idea/.name
 *.jpg
+
+# Custom stufffs
+/models

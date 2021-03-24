@@ -1,9 +1,11 @@
+import math
+
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 import os
 import config
-from tensorflow.keras import layers, models
+from tensorflow.keras import layers, models, callbacks
 from sklearn.model_selection import KFold
 
 
@@ -98,10 +100,17 @@ def fit_model(model, train_images: np.ndarray, train_labels: np.ndarray, val_ima
     return history, model
 
 
+# choice task lr decay by 0.5 every 5 epochs
+def lr_decay(epoch):
+    initial_lr = 0.001
+    drop_lr = 0.5
+    epochs_for_drop = 5.0
+    lr = initial_lr * math.pow(drop_lr, math.floor((1 + epoch) / epochs_for_drop))
+    return lr
+
 def fit_baseline_model(input_shape: tuple, train_images: np.ndarray, train_labels: np.ndarray, test_images: np.ndarray,
                        test_labels: np.ndarray):
     model = models.Sequential()
-
     model.add(layers.Conv2D(16, (3, 3), activation='relu', input_shape=input_shape))
     model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Conv2D(32, (3, 3), activation='relu'))
@@ -122,27 +131,66 @@ def fit_baseline_model(input_shape: tuple, train_images: np.ndarray, train_label
     return history, model
 
 
-def plot_val_train_loss(history):
+def fit_dropout_model(input_shape, train_images, train_labels, test_images, test_labels):
+    model = models.Sequential()
+    model.add(layers.Conv2D(16, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation='relu'))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(32, activation='relu'))
+    model.add(layers.Dropout(0.5))  # added
+    model.add(layers.Dense(10))
+
+    model.compile(optimizer='adam',
+                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                  metrics=['accuracy'])
+
+    history = model.fit(train_images, train_labels, epochs=12, validation_data=(test_images, test_labels))
+    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+    print(test_acc)
+    return history, model
+
+
+def fit_lr_decay_model(input_shape, train_images, train_labels, test_images, test_labels):
+    model = models.Sequential()
+
+    model.add(layers.Conv2D(16, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation='relu'))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(32, activation='relu'))
+    model.add(layers.Dense(10))
+
+    model.compile(optimizer='adam',
+                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                  metrics=['accuracy'])
+
+    # added
+    lr = callbacks.LearningRateScheduler(lr_decay)
+    callbacks_list = [lr]
+    # end of additions
+
+    print(model.summary())
+    history = model.fit(train_images, train_labels, epochs=12, validation_data=(test_images, test_labels),
+                        callbacks=callbacks_list)
+    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+    print(test_acc)
+    return history, model
+
+
+def plot_val_train_loss(history, title):
     plt.plot(history.history['accuracy'], label='accuracy')
     plt.plot(history.history['val_accuracy'], label='val_accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.ylim([0.5, 1])
     plt.legend(loc='lower right')
+    plt.title(title)
     plt.show()
-
-
-def testje(train_labels, aantal):
-    grootte = int(len(train_labels)/aantal)
-    for i in range(0, aantal):
-        geteld = [0] * 10
-        startIndex = i * grootte
-        for j in range(0, grootte):
-            geteld[train_labels[startIndex+j]] += 1
-        ans = "Totals: "
-        for k in range(0, 10):
-            ans += f"{k}: {geteld[k]}, "
-        print(ans)
 
 
 def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray, optimiser: str = 'adam'):
@@ -203,8 +251,24 @@ def main():
         plot_val_train_loss(history_baseline)
 
     # other model
+    try:
+        model_dropout = tf.keras.models.load_model('./models/model_dropout/')
+    except OSError:
+        print("model dropout doesnt exist")
+        history_dropout, model_dropout = fit_dropout_model(input_shape, train_images, train_labels, test_images,
+                                                           test_labels)
+        model_dropout.save('./models/model_dropout/')
+        plot_val_train_loss(history_dropout, "dropout model")
 
     # other model
+    try:
+        model_lr_decay = tf.keras.models.load_model('./models/model_lr_decay')
+    except OSError:
+        print("model lr decay doesnt exist")
+        history_lr_decay, model_lr_decay = fit_lr_decay_model(input_shape, train_images, train_labels, test_images,
+                                                              test_labels)
+        model_lr_decay.save('./models/model_lr_decay/')
+        plot_val_train_loss(history_lr_decay, "lr decay model")
 
 
 if __name__ == '__main__':
