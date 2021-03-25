@@ -213,6 +213,320 @@ def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray
     return avg_score
 
 
+def find_best_worst(input_shape, train_images: np.ndarray, train_labels: np.ndarray):
+    # model_b = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+    # first 4
+    # Best: 2 with 0.8742166757583618
+    # Worst: 0 with 0.8363333344459534
+    bestScore = 0
+    bestIndex = -1
+    worstScore = 0.99
+    worstIndex = -1
+    ans = ""
+    print("remove")
+    # remove
+    for i in range(0, 4):
+        if i == -1:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 0:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 1:
+            model_a = make_model(input_shape, 2, [16, 32, 32], [3, 3, 3], ["max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 2:
+            model_a = make_model(input_shape, 2, [32, 32], [3, 3, 3], ["max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 3:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 0, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+
+    print(ans)
+    print("adapt")
+    print(f"Best: {bestIndex} with {bestScore}")
+    print(f"Worst: {worstIndex} with {worstScore}")
+    # adapt
+    for i in range(4, 22):
+        j = i - 4
+        if j == 0:
+            model_a = make_model(input_shape, 3, [8, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 1:
+            model_a = make_model(input_shape, 3, [32, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 2:
+            model_a = make_model(input_shape, 3, [16, 16, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 3:
+            model_a = make_model(input_shape, 3, [16, 48, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 4:
+            model_a = make_model(input_shape, 3, [16, 32, 16], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 5:
+            model_a = make_model(input_shape, 3, [16, 32, 48], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 6:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [2, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 7:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [4, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 8:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 2, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 9:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 4, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 10:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 2], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 11:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 4], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 12:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["avg", "max", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 13:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "avg", "flat"], [2, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 14:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [3, 2, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 15:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 3, 0], 1, [32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 16:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [16])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 17:
+            model_a = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [48])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif j == 18:
+            combinations = ["relu"] * 4
+            for j in range(1,5):
+
+                model_a = make_model(input_shape, 3, [8, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1,
+                                     [32])
+                score = k_fold(model_a, 5, train_images, train_labels)
+                if score > bestScore:
+                    bestScore = score
+                    bestIndex = i
+                if score < worstScore:
+                    worstScore = score
+                    worstIndex = i
+
+    print("add")
+    # add NN layer
+    for i in range(23, 27):
+        if i == 23:
+            model_a = make_model(input_shape, 3, [8, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 2, [32, 32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 24:
+            model_a = make_model(input_shape, 3, [8, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 2, [48, 32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 25:
+            model_a = make_model(input_shape, 3, [8, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 2, [16, 32])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+        elif i == 26:
+            model_a = make_model(input_shape, 3, [8, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 2, [32,20])
+            score = k_fold(model_a, 5, train_images, train_labels)
+            if score > bestScore:
+                bestScore = score
+                bestIndex = i
+            if score < worstScore:
+                worstScore = score
+                worstIndex = i
+            ans += f"{i}: {score}\n"
+    print(f"Best: {bestIndex} with {bestScore}")
+    print(f"Worst: {worstIndex} with {worstScore}")
+    print("~~ DONE ~~")
+    print(ans)
+
+
 def main():
     # data loading
     train_images, train_labels, test_images, test_labels = load_data()
@@ -229,6 +543,8 @@ def main():
 
     # model_b = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
     # k_fold(model_b, 5, train_images, train_labels)
+    print("Start best worst")
+    find_best_worst(input_shape, train_images, train_labels)
     input()
 
     # baseline model
@@ -249,6 +565,24 @@ def main():
         model_baseline.save(config.BASELINE_DIR)
         print(config.BASELINE_DIR)
         plot_val_train_loss(history_baseline)
+
+    try:
+        model_less = tf.keras.models.load_model('./models/model_less/')
+    except OSError:
+        model_less = make_model(input_shape, 3, [16, 32, 32], [3, 4, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+        history_less, model_less = fit_model(model_less, train_images1, train_labels1, val_images1, val_labels1)
+
+        model_less.save('./models/model_less/')
+        plot_val_train_loss(history_less, "model less")
+
+    try:
+        model_bigger_nn = tf.keras.models.load_model('./models/model_bigger_nn/')
+    except OSError:
+        model_bigger_nn = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [48])
+        history_bigger_nn, model_bigger_nn = fit_model(model_bigger_nn, train_images1, train_labels1, val_images1, val_labels1)
+
+        model_bigger_nn.save('./models/model_bigger_nn/')
+        plot_val_train_loss(history_bigger_nn, "model bigger nn")
 
     #
     # NOG AAN TE PASSEN
@@ -272,6 +606,7 @@ def main():
                                                               test_labels)
         model_lr_decay.save('./models/model_lr_decay/')
         plot_val_train_loss(history_lr_decay, "lr decay model")
+
 
 
 if __name__ == '__main__':
