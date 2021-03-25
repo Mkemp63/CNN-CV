@@ -132,4 +132,4 @@ dmypy.json
 
 # Custom stufffs
 /models
-/.idea
+.idea/
