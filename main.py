@@ -234,6 +234,5 @@ def main():
         plot_val_train_loss(history_lr_decay, "Decay model")
 
 
-
 if __name__ == '__main__':
     main()
