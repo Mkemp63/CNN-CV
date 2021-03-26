@@ -90,6 +90,7 @@ def make_model(input_shape: tuple, convs: int, filters: list, ks: list, pool_t: 
     model.compile(optimizer=optimiser,
                   loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
+    print(model.summary())
     return model
 
 
@@ -153,9 +154,12 @@ def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray
 
         history, model = fit_model(model_, tr_imgs, tr_lab, val_imgs, val_lab, model_name)
         score = model_.evaluate(val_imgs, val_lab)
+
+        # Because the matplotlib library is stupid and creates a legend item for each plot, even when they have the
+        # same label...
         if i == 1:
-            plt.plot(history.history['loss'], label='loss', color="blue")
-            plt.plot(history.history['val_loss'], label='val_loss', color="orange")
+            plt.plot(history.history['loss'], label='training loss', color="blue")
+            plt.plot(history.history['val_loss'], label='validation loss', color="orange")
         else:
             plt.plot(history.history['loss'], color="blue")
             plt.plot(history.history['val_loss'], color="orange")
@@ -167,7 +171,10 @@ def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray
     plt.ylim([0, 1])
     plt.legend(loc='lower right')
     plt.title(model_name + " model plot with " + folds.__str__() + " fold cross validation")
+    print(f"plot saved at {config.ROOT_DIR}\\plots\\{model_name}.png")
+    plt.savefig(f"{config.ROOT_DIR}\\plots\\{model_name}.png")
     plt.show()
+
     avg_score = avg_score / folds
     # print(f"Average score: {avg_score}")
     return avg_score
@@ -245,7 +252,7 @@ def main():
         history_dropout, model_dropout = fit_model(model_dropout, train_images1, train_labels1, val_images1,
                                                    val_labels1, kfold=True, plot=True, model_name="Dropout")
         model_dropout.save(config.DROPOUT_DIR)
-        plot_val_train_loss(history_dropout, "Dropout model")
+       # plot_val_train_loss(history_dropout, "Dropout model")
 
     # lr decay model (choice task)
     try:
@@ -258,7 +265,6 @@ def main():
         history_lr_decay, model_lr_decay = fit_model(model_lr_decay, train_images1, train_labels1, val_images1,
                                                      val_labels1, decay=True, kfold=True, plot=True, model_name="Decay")
         model_dropout.save(config.DECAY_DIR)
-        plot_val_train_loss(history_lr_decay, "Decay model")
 
 
 if __name__ == '__main__':
