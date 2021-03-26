@@ -187,15 +187,11 @@ def main():
     img_cols = train_images[0].shape[1]
     input_shape = (img_rows, img_cols, 1)
 
-    # testje(train_labels, 5)
     aantal = int(config.Validate_perc * len(train_labels) * -1)
     val_images1 = train_images[aantal:]
     val_labels1 = train_labels[aantal:]
     train_images1 = train_images[:aantal]
     train_labels1 = train_labels[:aantal]
-
-    # model_b = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-    # k_fold(model_b, 5, train_images, train_labels)
 
     # baseline model
     training = not config.Use_pretrained
@@ -206,15 +202,12 @@ def main():
             print("Model baseline doesnt exist")
             training = True
     if training:
-        # history_baseline, model_baseline = fit_baseline_model(input_shape, train_images, train_labels, val_images,
-        #                                                       val_labels)
         model_baseline = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
         history_baseline, model_baseline = fit_model(model_baseline, train_images1, train_labels1, val_images1,
                                                      val_labels1, kfold=True, plot=True, model_name="Baseline")
 
         model_baseline.save(config.BASELINE_DIR)
         print(config.BASELINE_DIR)
-        # plot_val_train_loss(history_baseline, "Baseline model")
 
     try:
         model_less = tf.keras.models.load_model(config.LESS_DIR)
@@ -224,7 +217,6 @@ def main():
                                              kfold=True, plot=True, model_name="Less")
 
         model_less.save(config.LESS_DIR)
-        # plot_val_train_loss(history_less, "model less")
 
     try:
         model_bigger_nn = tf.keras.models.load_model(config.BIGGER_DIR)
@@ -235,24 +227,17 @@ def main():
                                                        val_labels1, kfold=True, plot=True, model_name="Bigger")
 
         model_bigger_nn.save(config.BIGGER_DIR)
-        # plot_val_train_loss(history_bigger_nn, "model bigger nn")
 
-    #
-    # NOG AAN TE PASSEN
-    #
-    # other model
     # dropout model
     try:
         model_dropout = tf.keras.models.load_model(config.DROPOUT_DIR)
     except OSError:
-        print("Model dropout doesnt exist")
         model_dropout = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"],
                                    [2, 2, 0], 1, [32], dropout=True)
 
         history_dropout, model_dropout = fit_model(model_dropout, train_images1, train_labels1, val_images1,
                                                    val_labels1, kfold=True, plot=True, model_name="Dropout")
         model_dropout.save(config.DROPOUT_DIR)
-       # plot_val_train_loss(history_dropout, "Dropout model")
 
     # lr decay model (choice task)
     try:
@@ -264,7 +249,7 @@ def main():
 
         history_lr_decay, model_lr_decay = fit_model(model_lr_decay, train_images1, train_labels1, val_images1,
                                                      val_labels1, decay=True, kfold=True, plot=True, model_name="Decay")
-        model_dropout.save(config.DECAY_DIR)
+        model_lr_decay.save(config.DECAY_DIR)
 
 
 if __name__ == '__main__':
