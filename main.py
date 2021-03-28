@@ -201,8 +201,14 @@ def testOtherData(model):
     test_loss, test_acc = model.evaluate(conc_img, conc_lab)
     ans += f"Concantenated acc: {test_acc}\n"
     print(ans)
-	
-	
+
+
+def testModel(model, test_images: np.ndarray, test_labels: np.ndarray):
+    test_loss, test_acc = model.evaluate(test_images, test_labels)
+    print(f"Acc: {test_acc} & loss: {test_loss}")
+    return test_loss, test_acc
+
+
 def main():
     # data loading
     train_images, train_labels, test_images, test_labels = load_data()
