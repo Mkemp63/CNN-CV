@@ -131,7 +131,6 @@ dmypy.json
 *.jpg
 
 # Custom stufffs
-/models
 .idea/
 .idea/workspace.xml
 .idea/misc.xml

@@ -20,4 +20,4 @@ Max_epochs = 15
 Epochs = 15
 Folds = 5
 Batch_size = 32
-Use_pretrained = False
+Use_pretrained = True

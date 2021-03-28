@@ -209,6 +209,23 @@ def testModel(model, test_images: np.ndarray, test_labels: np.ndarray):
     return test_loss, test_acc
 
 
+def printWeights(model, modelName: str):
+    ans = ""
+    i = 0;
+    for layer in model.layers:
+        ans += model.layers[i].get_weights() + "\n\n"
+        print(model.layers[i].get_weights())
+        print("~~~~~~~~~~~~~~~~~~~~~~")
+        # print(model.layers[i].bias.numpy())
+        # print("~~~~~~~~~~~~~~~~~~~~~~")
+        #print(model.layers[i].bias_initializer)
+        #print("~~~~~~~~~~~~~~~~~~~~~~")
+        i += 1
+    f = open(modelName+".txt", "w")
+    f.write(ans)
+    f.close()
+
+
 def main():
     # data loading
     train_images, train_labels, test_images, test_labels = load_data()
@@ -222,12 +239,23 @@ def main():
     train_images1 = train_images[:aantal]
     train_labels1 = train_labels[:aantal]
 
+    """print("start")
+    model_less = make_model(input_shape, 3, [16, 32, 32], [3, 4, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
+    model_less.fit(train_images, train_labels, epochs=config.Epochs, batch_size=config.Batch_size)
+    testModel(model_less, test_images, test_labels)
+    model_bigger_nn = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [48])
+    model_bigger_nn.fit(train_images, train_labels, epochs=config.Epochs, batch_size=config.Batch_size)
+    testModel(model_bigger_nn, test_images, test_labels)
+    print("finish")
+    input()"""
+
     # baseline model
     training = not config.Use_pretrained
     if config.Use_pretrained:
         try:
             model_baseline = tf.keras.models.load_model(config.BASELINE_DIR)
             print("Model baseline found")
+            printWeights(model_baseline, "Baseline")
         except OSError:
             print("Model baseline doesnt exist")
             training = True
@@ -238,23 +266,25 @@ def main():
 
         model_baseline.save(config.BASELINE_DIR)
         print(config.BASELINE_DIR)
-        #
+        # 0.9024666547775269
     # print("Start testing other data")
     # testOtherData(model_baseline)
     # input()
 
     try:
         model_less = tf.keras.models.load_model(config.LESS_DIR)
+        printWeights(model_less, "Bigger kernel")
     except OSError:
         model_less = make_model(input_shape, 3, [16, 32, 32], [3, 4, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
         history_less, model_less = fit_model(model_less, train_images, train_labels, val_images1, val_labels1,
-                                             kfold=True, plot=True, model_name="Less")
+                                             kfold=True, plot=True, model_name="Bigger kernel")
 
         model_less.save(config.LESS_DIR)
-        #
+        # 0.9078166604042053
 
     try:
         model_bigger_nn = tf.keras.models.load_model(config.BIGGER_DIR)
+        printWeights(model_bigger_nn, "Bigger NN")
     except OSError:
         model_bigger_nn = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1,
                                      [48])
@@ -262,11 +292,12 @@ def main():
                                                        val_labels1, kfold=True, plot=True, model_name="Bigger")
 
         model_bigger_nn.save(config.BIGGER_DIR)
-        #
+        # 0.9036666631698609
 
     # dropout model
     try:
         model_dropout = tf.keras.models.load_model(config.DROPOUT_DIR)
+        printWeights(model_dropout, "Dropout")
     except OSError:
         model_dropout = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"],
                                    [2, 2, 0], 1, [32], dropout=True)
@@ -274,10 +305,11 @@ def main():
         history_dropout, model_dropout = fit_model(model_dropout, train_images, train_labels, val_images1,
                                                    val_labels1, kfold=True, plot=True, model_name="Dropout")
         model_dropout.save(config.DROPOUT_DIR)
-
+        # 0.8986166834831237
     # lr decay model (choice task)
     try:
         model_lr_decay = tf.keras.models.load_model(config.DECAY_DIR)
+        printWeights(model_lr_decay, "Decay")
     except OSError:
         print("Model decay doesnt exist")
         model_lr_decay = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"],
@@ -286,6 +318,7 @@ def main():
         history_lr_decay, model_lr_decay = fit_model(model_lr_decay, train_images, train_labels, val_images1,
                                                      val_labels1, decay=True, kfold=True, plot=True, model_name="Decay")
         model_lr_decay.save(config.DECAY_DIR)
+        #
 
     print("DONE ! ! ! ! ! ! ! ! ! ! !")
     input()
