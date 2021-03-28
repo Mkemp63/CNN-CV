@@ -7,6 +7,7 @@ from sklearn.model_selection import KFold
 from tensorflow.keras import layers, models, callbacks
 
 import config
+import fashionData
 
 # GPU stuff, this has to be directly called after the tensorflow import
 gpus = tf.config.list_physical_devices('GPU')
@@ -148,7 +149,43 @@ def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray
     # print(f"Average score: {avg_score}")
     return avg_score
 
-	
+
+def testOtherData(model):
+    img0, img1, img2, img3, img4, img5, img6, img7, img8, img9 = fashionData.getFashionData()
+    imgs = [img0, img1, img2, img3, img4, img5, img6, img7, img8, img9]
+
+    labs = []
+    for i in range(0, 10):
+        t = [i] * len(imgs[i])
+        labs.append(np.array(t))
+
+    ans = ""
+    for i in range(0, 10):
+        test_loss, test_acc = model.evaluate(imgs[i], labs[i])
+        ans += f"For label {i}, acc: {test_acc}\n"
+
+    conc_img = np.concatenate((img0, img1, img2, img3, img4, img5, img6, img7, img8, img9), axis=0)
+    conc_lab = np.concatenate((labs[0], labs[1], labs[2], labs[3], labs[4], labs[5], labs[6], labs[7], labs[8], labs[9])
+                              , axis=0)
+    test_loss, test_acc = model.evaluate(conc_img, conc_lab)
+    ans += f"Concantenated acc: {test_acc}\n"
+    print(ans)
+
+"""
+For label 0, acc: 0.02649756520986557
+For label 1, acc: 0.16415093839168549
+For label 2, acc: 0.19855596125125885
+For label 3, acc: 0.06034482643008232
+For label 4, acc: 0.14130434393882751
+For label 5, acc: 0.0
+For label 6, acc: 0.6783825755119324
+For label 7, acc: 0.0
+For label 8, acc: 0.7289689183235168
+For label 9, acc: 0.0
+Concantenated acc: 0.23206084966659546
+"""
+
+
 def main():
     # data loading
     train_images, train_labels, test_images, test_labels = load_data()
@@ -163,6 +200,7 @@ def main():
     train_images1 = train_images[:aantal]
     train_labels1 = train_labels[:aantal]
 
+    # input()
     # model_b = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
     # k_fold(model_b, 5, train_images, train_labels)
 
@@ -171,6 +209,9 @@ def main():
     if config.Use_pretrained:
         try:
             model_baseline = tf.keras.models.load_model(config.BASELINE_DIR)
+
+            print(model_baseline.summary())
+            input()
         except OSError:
             print("Model baseline doesnt exist")
             training = True
@@ -178,12 +219,16 @@ def main():
         # history_baseline, model_baseline = fit_baseline_model(input_shape, train_images, train_labels, val_images,
         #                                                       val_labels)
         model_baseline = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-        history_baseline, model_baseline = fit_model(model_baseline, train_images1, train_labels1, val_images1,
+        history_baseline, model_baseline = fit_model(model_baseline, train_images, train_labels, val_images1,
                                                      val_labels1)
 
         model_baseline.save(config.BASELINE_DIR)
         print(config.BASELINE_DIR)
         plot_val_train_loss(history_baseline, "Baseline model")
+
+    print("Start testing other data")
+    testOtherData(model_baseline)
+    input()
 
     try:
         model_less = tf.keras.models.load_model('./models/model_less/')
@@ -236,3 +281,18 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""
+
+0.17291359603405
+0.40377357602119446
+0.23826715350151062
+0.023706896230578423
+0.06521739065647125
+0.04124860465526581
+0.3486780822277069
+0.15471512079238892
+0.7289689183235168
+0.09750566631555557
+"""
+

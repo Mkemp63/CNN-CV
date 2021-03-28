@@ -133,3 +133,7 @@ dmypy.json
 # Custom stufffs
 /models
 .idea/
+.idea/workspace.xml
+.idea/misc.xml
+*.iml
+*.xml
