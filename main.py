@@ -91,7 +91,7 @@ def make_model(input_shape: tuple, convs: int, filters: list, ks: list, pool_t: 
     model.compile(optimizer=optimiser,
                   loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
-    print(model.summary())
+    # print(model.summary())
     return model
 
 
@@ -177,7 +177,7 @@ def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray
     plt.show()
 
     avg_score = avg_score / folds
-    # print(f"Average score: {avg_score}")
+    print(f"Average score: {avg_score}")
     return avg_score
 
 
@@ -227,42 +227,42 @@ def main():
     if config.Use_pretrained:
         try:
             model_baseline = tf.keras.models.load_model(config.BASELINE_DIR)
-
-            print(model_baseline.summary())
-            input()
+            print("Model baseline found")
         except OSError:
             print("Model baseline doesnt exist")
             training = True
     if training:
         model_baseline = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-        history_baseline, model_baseline = fit_model(model_baseline, train_images1, train_labels1, val_images1,
+        history_baseline, model_baseline = fit_model(model_baseline, train_images, train_labels, val_images1,
                                                      val_labels1, kfold=True, plot=True, model_name="Baseline")
 
         model_baseline.save(config.BASELINE_DIR)
         print(config.BASELINE_DIR)
-
-    print("Start testing other data")
-    testOtherData(model_baseline)
-    input()
+        #
+    # print("Start testing other data")
+    # testOtherData(model_baseline)
+    # input()
 
     try:
         model_less = tf.keras.models.load_model(config.LESS_DIR)
     except OSError:
         model_less = make_model(input_shape, 3, [16, 32, 32], [3, 4, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-        history_less, model_less = fit_model(model_less, train_images1, train_labels1, val_images1, val_labels1,
+        history_less, model_less = fit_model(model_less, train_images, train_labels, val_images1, val_labels1,
                                              kfold=True, plot=True, model_name="Less")
 
         model_less.save(config.LESS_DIR)
+        #
 
     try:
         model_bigger_nn = tf.keras.models.load_model(config.BIGGER_DIR)
     except OSError:
         model_bigger_nn = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1,
                                      [48])
-        history_bigger_nn, model_bigger_nn = fit_model(model_bigger_nn, train_images1, train_labels1, val_images1,
+        history_bigger_nn, model_bigger_nn = fit_model(model_bigger_nn, train_images, train_labels, val_images1,
                                                        val_labels1, kfold=True, plot=True, model_name="Bigger")
 
         model_bigger_nn.save(config.BIGGER_DIR)
+        #
 
     # dropout model
     try:
@@ -271,7 +271,7 @@ def main():
         model_dropout = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"],
                                    [2, 2, 0], 1, [32], dropout=True)
 
-        history_dropout, model_dropout = fit_model(model_dropout, train_images1, train_labels1, val_images1,
+        history_dropout, model_dropout = fit_model(model_dropout, train_images, train_labels, val_images1,
                                                    val_labels1, kfold=True, plot=True, model_name="Dropout")
         model_dropout.save(config.DROPOUT_DIR)
 
@@ -283,10 +283,12 @@ def main():
         model_lr_decay = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"],
                                     [2, 2, 0], 1, [32])
 
-        history_lr_decay, model_lr_decay = fit_model(model_lr_decay, train_images1, train_labels1, val_images1,
+        history_lr_decay, model_lr_decay = fit_model(model_lr_decay, train_images, train_labels, val_images1,
                                                      val_labels1, decay=True, kfold=True, plot=True, model_name="Decay")
         model_lr_decay.save(config.DECAY_DIR)
 
+    print("DONE ! ! ! ! ! ! ! ! ! ! !")
+    input()
 
 if __name__ == '__main__':
     main()
