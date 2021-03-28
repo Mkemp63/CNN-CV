@@ -91,19 +91,26 @@ def make_model(input_shape: tuple, convs: int, filters: list, ks: list, pool_t: 
     model.compile(optimizer=optimiser,
                   loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
+    print(model.summary())
     return model
 
 
 def fit_model(model, train_images: np.ndarray, train_labels: np.ndarray, val_images: np.ndarray, val_labels: np.ndarray,
-              print: bool = False, decay: bool = False):
-    if decay:
-        lr = callbacks.LearningRateScheduler(lr_decay)
-        callbacks_list = [lr]
-        history = model.fit(train_images, train_labels, epochs=config.Epochs, validation_data=(val_images, val_labels),
-                            batch_size=config.Batch_size, callbacks=callbacks_list)
+              model_name: str, print: bool = False, decay: bool = False, kfold: bool = False, plot: bool = False):
+    if kfold:
+        history = k_fold(model=model, folds=config.Folds, train_images=train_images, train_labels=train_labels,
+                         plot=plot, model_name=model_name)
     else:
-        history = model.fit(train_images, train_labels, epochs=config.Epochs, validation_data=(val_images, val_labels),
-                            batch_size=config.Batch_size)
+        if decay:
+            lr = callbacks.LearningRateScheduler(lr_decay)
+            callbacks_list = [lr]
+            history = model.fit(train_images, train_labels, epochs=config.Epochs,
+                                validation_data=(val_images, val_labels),
+                                batch_size=config.Batch_size, callbacks=callbacks_list)
+        else:
+            history = model.fit(train_images, train_labels, epochs=config.Epochs,
+                                validation_data=(val_images, val_labels),
+                                batch_size=config.Batch_size)
 
     if print:
         evaluate_model(model, val_images, val_labels)
@@ -130,10 +137,15 @@ def plot_val_train_loss(history, title):
     plt.show()
 
 
-def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray, optimiser: str = 'adam'):
+def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray, model_name: str,
+           optimiser: str = 'adam',
+           plot: bool = False):
     avg_score = 0
-    kFold = KFold(n_splits=folds, shuffle=False)
-    for train_index, val_index in kFold.split(train_images, train_labels):
+    kfold = KFold(n_splits=folds, shuffle=False)
+    i = 1
+    plt.figure()
+    for train_index, val_index in kfold.split(train_images, train_labels):
+        print("Fold", i, "out of", folds)
         tr_imgs, val_imgs = train_images[train_index], train_images[val_index]
         tr_lab, val_lab = train_labels[train_index], train_labels[val_index]
 
@@ -141,10 +153,29 @@ def k_fold(model, folds: int, train_images: np.ndarray, train_labels: np.ndarray
         model_.compile(optimizer=optimiser, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                        metrics=['accuracy'])
 
-        trained_model = fit_model(model_, tr_imgs, tr_lab, val_imgs, val_lab)
+        history, model = fit_model(model_, tr_imgs, tr_lab, val_imgs, val_lab, model_name)
         score = model_.evaluate(val_imgs, val_lab)
-        # print(f"  Score: {score[1]}")
+
+        # Because the matplotlib library is stupid and creates a legend item for each plot, even when they have the
+        # same label...
+        if i == 1:
+            plt.plot(history.history['loss'], label='training loss', color="blue")
+            plt.plot(history.history['val_loss'], label='validation loss', color="orange")
+        else:
+            plt.plot(history.history['loss'], color="blue")
+            plt.plot(history.history['val_loss'], color="orange")
         avg_score += score[1]
+        i += 1
+
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.ylim([0, 1])
+    plt.legend(loc='lower right')
+    plt.title(model_name + " model plot with " + folds.__str__() + " fold cross validation")
+    print(f"plot saved at {config.ROOT_DIR}\\plots\\{model_name}.png")
+    plt.savefig(f"{config.ROOT_DIR}\\plots\\{model_name}.png")
+    plt.show()
+
     avg_score = avg_score / folds
     # print(f"Average score: {avg_score}")
     return avg_score
@@ -170,22 +201,8 @@ def testOtherData(model):
     test_loss, test_acc = model.evaluate(conc_img, conc_lab)
     ans += f"Concantenated acc: {test_acc}\n"
     print(ans)
-
-"""
-For label 0, acc: 0.02649756520986557
-For label 1, acc: 0.16415093839168549
-For label 2, acc: 0.19855596125125885
-For label 3, acc: 0.06034482643008232
-For label 4, acc: 0.14130434393882751
-For label 5, acc: 0.0
-For label 6, acc: 0.6783825755119324
-For label 7, acc: 0.0
-For label 8, acc: 0.7289689183235168
-For label 9, acc: 0.0
-Concantenated acc: 0.23206084966659546
-"""
-
-
+	
+	
 def main():
     # data loading
     train_images, train_labels, test_images, test_labels = load_data()
@@ -193,16 +210,11 @@ def main():
     img_cols = train_images[0].shape[1]
     input_shape = (img_rows, img_cols, 1)
 
-    # testje(train_labels, 5)
     aantal = int(config.Validate_perc * len(train_labels) * -1)
     val_images1 = train_images[aantal:]
     val_labels1 = train_labels[aantal:]
     train_images1 = train_images[:aantal]
     train_labels1 = train_labels[:aantal]
-
-    # input()
-    # model_b = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-    # k_fold(model_b, 5, train_images, train_labels)
 
     # baseline model
     training = not config.Use_pretrained
@@ -216,54 +228,46 @@ def main():
             print("Model baseline doesnt exist")
             training = True
     if training:
-        # history_baseline, model_baseline = fit_baseline_model(input_shape, train_images, train_labels, val_images,
-        #                                                       val_labels)
         model_baseline = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-        history_baseline, model_baseline = fit_model(model_baseline, train_images, train_labels, val_images1,
-                                                     val_labels1)
+        history_baseline, model_baseline = fit_model(model_baseline, train_images1, train_labels1, val_images1,
+                                                     val_labels1, kfold=True, plot=True, model_name="Baseline")
 
         model_baseline.save(config.BASELINE_DIR)
         print(config.BASELINE_DIR)
-        plot_val_train_loss(history_baseline, "Baseline model")
 
     print("Start testing other data")
     testOtherData(model_baseline)
     input()
 
     try:
-        model_less = tf.keras.models.load_model('./models/model_less/')
+        model_less = tf.keras.models.load_model(config.LESS_DIR)
     except OSError:
         model_less = make_model(input_shape, 3, [16, 32, 32], [3, 4, 3], ["max", "max", "flat"], [2, 2, 0], 1, [32])
-        history_less, model_less = fit_model(model_less, train_images1, train_labels1, val_images1, val_labels1)
+        history_less, model_less = fit_model(model_less, train_images1, train_labels1, val_images1, val_labels1,
+                                             kfold=True, plot=True, model_name="Less")
 
-        model_less.save('./models/model_less/')
-        plot_val_train_loss(history_less, "model less")
+        model_less.save(config.LESS_DIR)
 
     try:
-        model_bigger_nn = tf.keras.models.load_model('./models/model_bigger_nn/')
+        model_bigger_nn = tf.keras.models.load_model(config.BIGGER_DIR)
     except OSError:
-        model_bigger_nn = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1, [48])
-        history_bigger_nn, model_bigger_nn = fit_model(model_bigger_nn, train_images1, train_labels1, val_images1, val_labels1)
+        model_bigger_nn = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"], [2, 2, 0], 1,
+                                     [48])
+        history_bigger_nn, model_bigger_nn = fit_model(model_bigger_nn, train_images1, train_labels1, val_images1,
+                                                       val_labels1, kfold=True, plot=True, model_name="Bigger")
 
-        model_bigger_nn.save('./models/model_bigger_nn/')
-        plot_val_train_loss(history_bigger_nn, "model bigger nn")
+        model_bigger_nn.save(config.BIGGER_DIR)
 
-    #
-    # NOG AAN TE PASSEN
-    #
-    # other model
     # dropout model
     try:
         model_dropout = tf.keras.models.load_model(config.DROPOUT_DIR)
     except OSError:
-        print("Model dropout doesnt exist")
         model_dropout = make_model(input_shape, 3, [16, 32, 32], [3, 3, 3], ["max", "max", "flat"],
                                    [2, 2, 0], 1, [32], dropout=True)
 
         history_dropout, model_dropout = fit_model(model_dropout, train_images1, train_labels1, val_images1,
-                                                   val_labels1)
+                                                   val_labels1, kfold=True, plot=True, model_name="Dropout")
         model_dropout.save(config.DROPOUT_DIR)
-        plot_val_train_loss(history_dropout, "Dropout model")
 
     # lr decay model (choice task)
     try:
@@ -274,25 +278,10 @@ def main():
                                     [2, 2, 0], 1, [32])
 
         history_lr_decay, model_lr_decay = fit_model(model_lr_decay, train_images1, train_labels1, val_images1,
-                                                     val_labels1, decay=True)
-        model_dropout.save(config.DECAY_DIR)
-        plot_val_train_loss(history_lr_decay, "Decay model")
+                                                     val_labels1, decay=True, kfold=True, plot=True, model_name="Decay")
+        model_lr_decay.save(config.DECAY_DIR)
 
 
 if __name__ == '__main__':
     main()
-
-"""
-
-0.17291359603405
-0.40377357602119446
-0.23826715350151062
-0.023706896230578423
-0.06521739065647125
-0.04124860465526581
-0.3486780822277069
-0.15471512079238892
-0.7289689183235168
-0.09750566631555557
-"""
 
